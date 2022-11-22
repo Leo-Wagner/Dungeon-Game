@@ -9,6 +9,8 @@ class Map:
         self.data = []
         with open(filename, 'rt') as f:
             for line in f:
+                # There is a '\n' character at the end of each line in map2.txt
+                ## Need to use 'strip' to get rid of this character.
                 self.data.append(line.strip())
 
         self.tilewidth = len(self.data[0])

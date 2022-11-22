@@ -29,10 +29,13 @@ class DungeonGame:
         self.wizards = pygame.sprite.Group()
         for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
+                # Determines where to build walls.
                 if tile == '1':
                     Wall(self, col, row)
+                # Determines where to spawn wizards.
                 if tile == 'M':
                     Wizard(self, col, row)
+                # Determines where to spawn the knight.
                 if tile == 'P':
                     self.knight = Knight(self, col, row)
         self.camera = Camera(self.map.width, self.map.height)
@@ -53,6 +56,7 @@ class DungeonGame:
         self.all_sprites.update()
         self.camera.update(self.knight)
 
+# Not called in this version of game, was for earlier when I wanted to see the grid.
     def draw_grid(self):
         for x in range(0, WIDTH, TILESIZE):
             pygame.draw.line(self.screen, LIGHTGREY, (x, 0), (x, HEIGHT))

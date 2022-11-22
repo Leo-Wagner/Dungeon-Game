@@ -109,3 +109,5 @@ class Wall(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
+
+    # Does not require an 'update' as wall does not move.
