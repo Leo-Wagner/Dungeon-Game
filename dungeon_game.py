@@ -12,6 +12,8 @@ class DungeonGame:
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
+        # When a key is held down, there is a .5 s delay before a KEYDOWN event is sent.
+        # If the key is still held down after the initial delay, KEYDOWN events are sent every .1 s.
         pygame.key.set_repeat(500, 100)
         self.load_data()
 
@@ -20,6 +22,7 @@ class DungeonGame:
         img_folder = path.join(game_folder, 'img')
         self.map = Map(path.join(game_folder, 'map2.txt'))
         self.knight_img = pygame.image.load(path.join(img_folder, KNIGHT_IMG)).convert_alpha()
+        self.stone_img = pygame.image.load(path.join(img_folder, STONE_IMG)).convert_alpha()
         self.wizard_img = pygame.image.load(path.join(img_folder, WIZARD_IMG)).convert_alpha()
         self.wall_img = pygame.image.load(path.join(img_folder, WALL_IMG)).convert_alpha()
 
@@ -27,6 +30,7 @@ class DungeonGame:
         self.all_sprites = pygame.sprite.Group()
         self.walls = pygame.sprite.Group()
         self.wizards = pygame.sprite.Group()
+        self.stones = pygame.sprite.Group()
         for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
                 # Determines where to build walls.
@@ -53,8 +57,14 @@ class DungeonGame:
         sys.exit()
 
     def update(self):
+        # Update the game loop.
         self.all_sprites.update()
         self.camera.update(self.knight)
+        # Finds collisions between the wizards and the stones.
+        hits = pygame.sprite.groupcollide(self.wizards, self.stones, False, True)
+        # Deletes a wizard if it has been hit by a stone.
+        for hit in hits:
+            hit.kill()
 
 # Not called in this version of game, was for earlier when I wanted to see the grid.
     def draw_grid(self):
@@ -87,6 +97,7 @@ class DungeonGame:
 
 dg = DungeonGame()
 #dg.show_start_screen()
+# Create a loop to run the game.
 while True:
     dg.new()
     dg.run()

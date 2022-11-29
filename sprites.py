@@ -37,6 +37,7 @@ class Knight(pygame.sprite.Sprite):
         self.vel = vec(0, 0)
         self.pos = vec(x, y) * TILESIZE
         self.rot = 0
+        self.last_shot = 0
 
 # A function to determine how the knight should respond if certain keys are pressed.
     def get_keys(self):
@@ -51,6 +52,12 @@ class Knight(pygame.sprite.Sprite):
             self.vel = vec(KNIGHT_SPEED, 0).rotate(-self.rot)
         if keys[pygame.K_DOWN]:
             self.vel = vec(-KNIGHT_SPEED / 2, 0).rotate(-self.rot)
+        if keys[pygame.K_SPACE]:
+            now = pygame.time.get_ticks()
+            if now - self.last_shot > STONE_RATE:
+                self.last_shot = now
+                dir = vec(1, 0).rotate(-self.rot)
+                Stone(self.game, self.pos, dir)
 
     def update(self):
         self.get_keys()
@@ -66,7 +73,7 @@ class Knight(pygame.sprite.Sprite):
         self.rect.center = self.hit_rect.center
 
 class Wizard(pygame.sprite.Sprite):
-    '''A class to manage the wizard'''
+    '''A class to manage wizards'''
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.wizards
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -96,9 +103,31 @@ class Wizard(pygame.sprite.Sprite):
         collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
 
+class Stone(pygame.sprite.Sprite):
+    '''A class to manage stones'''
+    def __init__(self, game, pos, dir):
+        self.groups = game.all_sprites, game.stones
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = game.stone_img
+        self.rect = self.image.get_rect()
+        self.pos = vec(pos)
+        self.rect.center = pos
+        self.vel = dir * STONE_SPEED
+        self.spawn_time = pygame.time.get_ticks()
+
+    def update(self):
+        self.pos += self.vel * self.game.dt
+        self.rect.center = self.pos
+        # Deletes stones if the stone hits a wall.
+        if pygame.sprite.spritecollideany(self, self.game.walls):
+            self.kill()
+        # Deletes stones if the stone has existed for longer than 2 seconds.
+        if pygame.time.get_ticks() - self.spawn_time > STONE_TIME:
+            self.kill()
 
 class Wall(pygame.sprite.Sprite):
-    '''A class to manage the walls.'''
+    '''A class to manage walls.'''
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.walls
         pygame.sprite.Sprite.__init__(self, self.groups)

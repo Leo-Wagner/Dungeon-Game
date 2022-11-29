@@ -18,11 +18,17 @@ GRIDHEIGHT = HEIGHT / TILESIZE
 # Wall settings
 WALL_IMG = 'tile_0058.png'
 
-# Player Settings
+# Knight Settings
 KNIGHT_SPEED = 150
 KNIGHT_ROT_SPEED = 420
 KNIGHT_IMG = 'tile_0096.png'
 KNIGHT_HIT_RECT = pygame.Rect(0, 0, 16, 16)
+
+# Stone Settings
+STONE_IMG = 'tile_0101.png'
+STONE_SPEED = 300
+STONE_TIME = 2000
+STONE_RATE = 100
 
 # Wizard settings
 WIZARD_IMG = 'tile_0111.png'
