@@ -1,4 +1,5 @@
 import pygame
+from random import choice
 from settings import *
 from tilemap import collide_hit_rect
 vec = pygame.math.Vector2
@@ -89,13 +90,23 @@ class Wizard(pygame.sprite.Sprite):
         self.rect.center = self.pos
         self.rot = 0
         self.health = WIZARD_HEALTH
+        self.speed = choice(WIZARD_SPEED)
+
+    def avoid_wizards(self):
+        for wizard in self.game.wizards:
+            if wizard != self:
+                dist = self.pos - wizard.pos
+                if 0 < dist.length() < AVOID_RADIUS:
+                    self.acc += dist.normalize()
 
     def update(self):
         self.rot = (self.game.knight.pos - self.pos).angle_to(vec(1, 0))
         self.image = pygame.transform.rotate(self.game.wizard_image, self.rot)
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
-        self.acc = vec(WIZARD_SPEED, 0).rotate(-self.rot)
+        self.acc = vec(1, 0).rotate(-self.rot)
+        self.avoid_wizards()
+        self.acc.scale_to_length(self.speed)
         self.acc += self.vel * -1
         self.vel += self.acc * self.game.dt
         self.pos += self.vel * self.game.dt + .5 * self.acc * self.game.dt ** 2
