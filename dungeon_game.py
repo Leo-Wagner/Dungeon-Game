@@ -77,8 +77,21 @@ class DungeonGame:
                 # Determines where to spawn the knight.
                 #if tile == 'P':
                     #self.knight = Knight(self, col, row)
-        self.knight = Knight(self, 5, 5)
+        for tile_object in self.map.tmxdata.objects:
+            # Checks to see if name of the tile object is knight.
+            # If so, the knight spawns at the location of the tile object.
+            if tile_object.name == 'knight':
+                self.knight = Knight(self, tile_object.x, tile_object.y)
+            # Checks to see if the name of the tile object is wall.
+            # If so, an obstacle spawns at the location of the tile object.
+            if tile_object.name == 'wall':
+                Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
+            # Checks to see if the name of the tile object is wizard.
+            # If so, a wizard spawns at the location of the tile object.
+            if tile_object.name == 'wizard':
+                Wizard(self, tile_object.x, tile_object.y)
         self.camera = Camera(self.map.width, self.map.height)
+        self.draw_debug = False
 
     def run(self):
         self.playing = True
@@ -137,6 +150,11 @@ class DungeonGame:
             if isinstance(sprite, Wizard):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))
+            if self.draw_debug:
+                pygame.draw.rect(self.screen, WHITE, self.camera.apply_rect(sprite.hit_rect), 1)
+            if self.draw_debug:
+                for wall in self.walls:
+                    pygame.draw.rect(self.screen, WHITE, self.camera.apply_rect(wall.rect), 1)
         draw_knight_health(self.screen, 10, 10, self.knight.health / KNIGHT_HEALTH)
         pygame.display.flip()
 
@@ -147,6 +165,8 @@ class DungeonGame:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.quit()
+                if event.key == pygame.K_z:
+                    self.draw_debug = not self.draw_debug
 
     #def show_start_screen(self):
         #pass

@@ -35,7 +35,7 @@ class Knight(pygame.sprite.Sprite):
         self.hit_rect = KNIGHT_HIT_RECT
         self.hit_rect.center = self.rect.center
         self.vel = vec(0, 0)
-        self.pos = vec(x, y) * TILESIZE
+        self.pos = vec(x, y)
         self.rot = 0
         self.last_shot = 0
         self.health = KNIGHT_HEALTH
@@ -83,7 +83,7 @@ class Wizard(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.hit_rect = WIZARD_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
-        self.pos = vec(x, y) * TILESIZE
+        self.pos = vec(x, y)
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
         self.rect.center = self.pos
@@ -143,6 +143,7 @@ class Stone(pygame.sprite.Sprite):
         self.game = game
         self.image = game.stone_image
         self.rect = self.image.get_rect()
+        self.hit_rect = self.rect
         self.pos = vec(pos)
         self.rect.center = pos
         self.vel = dir * STONE_SPEED
@@ -172,3 +173,15 @@ class Wall(pygame.sprite.Sprite):
         self.rect.y = y * TILESIZE
 
     # Does not require an 'update' as wall does not move.
+
+class Obstacle(pygame.sprite.Sprite):
+    '''A class to manage walls.'''
+    def __init__(self, game, x, y, width, height):
+        self.groups = game.walls
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.rect = pygame.Rect(x, y, width, height)
+        self.x = x
+        self.y = y
+        self.rect.x = x
+        self.rect.y = y
