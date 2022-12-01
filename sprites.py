@@ -28,11 +28,13 @@ def collide_with_walls(sprite, group, dir):
 class Knight(pygame.sprite.Sprite):
     '''A class to manage the knight'''
     def __init__(self, game, x, y):
+        self._layer = KNIGHT_LAYER
         self.groups = game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = game.knight_image
         self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
         self.hit_rect = KNIGHT_HIT_RECT
         self.hit_rect.center = self.rect.center
         self.vel = vec(0, 0)
@@ -74,6 +76,11 @@ class Knight(pygame.sprite.Sprite):
         collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
 
+    def add_health(self, amount):
+        self.health += amount
+        if self.health > KNIGHT_HEALTH:
+            self.health = KNIGHT_HEALTH
+
 class Wizard(pygame.sprite.Sprite):
     '''A class to manage wizards'''
     def __init__(self, game, x, y):
@@ -82,6 +89,7 @@ class Wizard(pygame.sprite.Sprite):
         self.game = game
         self.image = game.wizard_image
         self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
         self.hit_rect = WIZARD_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
         self.pos = vec(x, y)
@@ -170,21 +178,6 @@ class Stone(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.spawn_time > STONE_TIME:
             self.kill()
 
-class Wall(pygame.sprite.Sprite):
-    '''A class to manage walls.'''
-    def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.walls
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.game = game
-        self.image = game.wall_image
-        self.rect = self.image.get_rect()
-        self.x = x
-        self.y = y
-        self.rect.x = x * TILESIZE
-        self.rect.y = y * TILESIZE
-
-    # Does not require an 'update' as wall does not move.
-
 class Obstacle(pygame.sprite.Sprite):
     '''A class to manage walls.'''
     def __init__(self, game, x, y, width, height):
@@ -196,3 +189,14 @@ class Obstacle(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = x
         self.rect.y = y
+
+class Collectible(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, type):
+        self._collectible = COLLECTIBLES_LAYER
+        self.groups = game.all_sprites, game.collectibles
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.image = game.collectible_images[type]
+        self.rect = self.image.get_rect()
+        self.type = type
+        self.rect.center = (x, y)
+        self.pos = vec(x,y)

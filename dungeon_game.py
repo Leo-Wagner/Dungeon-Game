@@ -60,23 +60,16 @@ class DungeonGame:
         self.stone_image = pygame.image.load(path.join(image_folder, STONE_IMAGE)).convert_alpha()
         self.wizard_image = pygame.image.load(path.join(image_folder, WIZARD_IMAGE)).convert_alpha()
         self.wall_image = pygame.image.load(path.join(image_folder, WALL_IMAGE)).convert_alpha()
+        self.collectible_images = {}
+        for collectible in COLLECTIBLE_IMAGES:
+            self.collectible_images[collectible] = pygame.image.load(path.join(image_folder, COLLECTIBLE_IMAGES[collectible])).convert_alpha()
 
     def new(self):
-        self.all_sprites = pygame.sprite.Group()
+        self.all_sprites = pygame.sprite.LayeredUpdates()
         self.walls = pygame.sprite.Group()
         self.wizards = pygame.sprite.Group()
         self.stones = pygame.sprite.Group()
-        #for row, tiles in enumerate(self.map.data):
-            #for col, tile in enumerate(tiles):
-                # Determines where to build walls.
-                #if tile == '1':
-                    #Wall(self, col, row)
-                # Determines where to spawn wizards.
-                #if tile == 'M':
-                    #Wizard(self, col, row)
-                # Determines where to spawn the knight.
-                #if tile == 'P':
-                    #self.knight = Knight(self, col, row)
+        self.collectibles = pygame.sprite.Group()
         for tile_object in self.map.tmxdata.objects:
             # Checks to see if name of the tile object is knight.
             # If so, the knight spawns at the location of the tile object.
@@ -90,6 +83,8 @@ class DungeonGame:
             # If so, a wizard spawns at the location of the tile object.
             if tile_object.name == 'wizard':
                 Wizard(self, tile_object.x, tile_object.y)
+            if tile_object.name in ['health']:
+                Collectible(self, tile_object.x, tile_object.y, tile_object.name)
         self.camera = Camera(self.map.width, self.map.height)
         self.draw_debug = False
 
@@ -110,7 +105,11 @@ class DungeonGame:
         # Update the game loop.
         self.all_sprites.update()
         self.camera.update(self.knight)
-
+        # Finds collisions between the knight and collectibles.
+        hits = pygame.sprite.spritecollide(self.knight, self.collectibles, False)
+        for hit in hits:
+            if hit.type == 'health' and self.knight.health < KNIGHT_HEALTH:
+                self.knight.add_health(HEALTH_PACK)
         # Finds collisions between the knight and wizards.
         hits = pygame.sprite.spritecollide(self.knight, self.wizards, False, collide_hit_rect)
         for hit in hits:
