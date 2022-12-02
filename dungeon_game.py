@@ -5,14 +5,21 @@ from settings import *
 from sprites import *
 from tilemap import *
 
+# A function which displays the amount of health the knight has remaining.
+# A rectangle appears in the top left side of the screen and changes color and gets shorter as the knight loses health.
 def draw_knight_health(surface, x, y, health_percentage):
+    # Makes sure the knight doesn't have negative health.
     if health_percentage < 0:
         health_percentage = 0
     BAR_LENGTH = 100
     BAR_HEIGHT = 20
+    # Sets the length of the health bar as a proportion of the knight's health.
     fill = health_percentage * BAR_LENGTH
+    # Creates an outline for the health bar.
     outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+    # Fills the entire length of the rectangle with color.
     fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+    # Checks the health percentage of the knight and sets the color accordingly.
     if health_percentage > .90:
         color = HEALTH_100
     elif health_percentage > .80:
@@ -33,14 +40,16 @@ def draw_knight_health(surface, x, y, health_percentage):
         color = HEALTH_20
     elif health_percentage >= 0:
         color = HEALTH_10
+    # Draws the colored part of the health bar.
     pygame.draw.rect(surface, color, fill_rect)
+    # Draws the outline of the health bar.
     pygame.draw.rect(surface, WHITE, outline_rect, 2)
 
 class DungeonGame:
     '''A class to manage the game.'''
     def __init__(self):
         pygame.init()
-        # Set screen dimensions.
+        # Sets the screen dimensions.
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         # Sets caption at top of screen.
         pygame.display.set_caption(TITLE)
@@ -97,6 +106,7 @@ class DungeonGame:
             self.knight_hit_sound[type] = pygame.mixer.Sound(path.join(sound_folder, KNIGHT_HIT_SOUND[type]))
 
     def new(self):
+        # Was needed to ensure that the knight goes over the health potion when they collide.
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.walls = pygame.sprite.Group()
         self.wizards = pygame.sprite.Group()
@@ -115,18 +125,19 @@ class DungeonGame:
             # If so, a wizard spawns at the location of the tile object.
             if tile_object.name == 'wizard':
                 Wizard(self, tile_object.x, tile_object.y)
+            # Checks to see if the name of the tile object is health.
+            # If so, a health potion spawns at the location of the tile object.
             if tile_object.name in ['health']:
                 Collectible(self, tile_object.x, tile_object.y, tile_object.name)
         self.camera = Camera(self.map.width, self.map.height)
-        self.draw_debug = False
         self.paused = False
-
 
     def run(self):
         self.playing = True
+        # Loops the background music after the song ends.
         pygame.mixer.music.play(loops=-1)
         while self.playing:
-            self.dt = self.clock.tick(FPS) / 1000
+            self.time = self.clock.tick(FPS) / 1000
             self.events()
             if not self.paused:
                 self.update()
@@ -180,45 +191,69 @@ class DungeonGame:
             # Pauses the movement of a wizard if it is hit by a stone.
             hit.vel = vec(0, 0)
 
+
     def draw(self):
+        # Draws the map onto the game surface and sets a shifting rectangle for the map.
         self.screen.blit(self.map_image, self.camera.apply_rect(self.map_rect))
         for sprite in self.all_sprites:
             if isinstance(sprite, Wizard):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))
-            if self.draw_debug:
-                pygame.draw.rect(self.screen, WHITE, self.camera.apply_rect(sprite.hit_rect), 1)
-            if self.draw_debug:
-                for wall in self.walls:
-                    pygame.draw.rect(self.screen, WHITE, self.camera.apply_rect(wall.rect), 1)
+        # Calls the function which draws the knight health onto the screen.
         draw_knight_health(self.screen, 10, 10, self.knight.health / KNIGHT_HEALTH)
+        # Checks to see if the game is paused.
         if self.paused:
+            # Places a grey tint on the screen so that it looks dim.
             self.screen.blit(self.dim_screen, (0, 0))
+            # Writes 'PAUSED' in Dungeon font on the screen.
             self.draw_text('PAUSED', self.font, 105, WHITE, WIDTH / 2, HEIGHT /2, align = 'top')
         pygame.display.flip()
 
     def events(self):
         for event in pygame.event.get():
+            # Exits the game if the player clicks on the 'X'
             if event.type == pygame.QUIT:
                 self.quit()
+                # Exits the fame if the player presses the 'esc' key.
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.quit()
-                if event.key == pygame.K_z:
-                    self.draw_debug = not self.draw_debug
+            # Pauses the game if the mouse is clicked.
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.paused = not self.paused
 
-    #def show_start_screen(self):
-        #pass
+    # Creates a black screen with white text when the knight dies.
+    def game_over_screen(self):
+        # Fills the screen with black.
+        self.screen.fill(BLACK)
+        # Writes 'GAME OVER' in dungeon font on the screen.
+        self.draw_text("GAME OVER", self.font, 100, WHITE,
+                       WIDTH / 2, HEIGHT / 2, align='top')
+        # Writes 'CLICK MOUSE TO RESTART' in dungeon font on the screen.
+        self.draw_text("CLICK MOUSE TO RESTART", self.font, 60, WHITE,
+                       WIDTH / 2, HEIGHT * 3 / 4, align='top')
+        pygame.display.flip()
+        self.game_over_key()
 
-    #def show_go_screen(self):
-        #pass
+    def game_over_key(self):
+        # The game waits to see if either the 'X' or the mouse is clicked.
+        pygame.event.wait()
+        waiting = True
+        while waiting:
+            self.clock.tick(FPS)
+            for event in pygame.event.get():
+                # Closes the screen if the player clicks 'X'
+                if event.type == pygame.QUIT:
+                    waiting = False
+                    self.quit()
+                # Restarts the game if the player clicks on the screen with the mouse.
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    waiting = False
 
-dg = DungeonGame()
-#dg.show_start_screen()
-# Create a loop to run the game.
+dungeon_game = DungeonGame()
+
+# A loop to run the game.
 while True:
-    dg.new()
-    dg.run()
-    #dg.show_go_screen()
+    dungeon_game.new()
+    dungeon_game.run()
+    dungeon_game.game_over_screen()

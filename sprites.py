@@ -66,11 +66,11 @@ class Knight(pygame.sprite.Sprite):
 
     def update(self):
         self.get_keys()
-        self.rot = (self.rot + self.rot_speed * self.game.dt % 360)
+        self.rot = (self.rot + self.rot_speed * self.game.time % 360)
         self.image = pygame.transform.rotate(self.game.knight_image, self.rot)
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
-        self.pos += self.vel * self.game.dt
+        self.pos += self.vel * self.game.time
         self.hit_rect.centerx = self.pos.x
         collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.centery = self.pos.y
@@ -98,7 +98,9 @@ class Wizard(pygame.sprite.Sprite):
         self.acc = vec(0, 0)
         self.rect.center = self.pos
         self.rot = 0
+        # Sets the health of the wizard to 100.44
         self.health = WIZARD_HEALTH
+        # Sets different speeds for different wizards.
         self.speed = choice(WIZARD_SPEED)
 
     # A function that stops the wizards from clumping together into one image.
@@ -119,8 +121,8 @@ class Wizard(pygame.sprite.Sprite):
         self.avoid_wizards()
         self.acc.scale_to_length(self.speed)
         self.acc += self.vel * -1
-        self.vel += self.acc * self.game.dt
-        self.pos += self.vel * self.game.dt + .5 * self.acc * self.game.dt ** 2
+        self.vel += self.acc * self.game.time
+        self.pos += self.vel * self.game.time + .5 * self.acc * self.game.time ** 2
         self.hit_rect.centerx = self.pos.x
         collide_with_walls(self, self.game.walls, 'x')
         self.hit_rect.centery = self.pos.y
@@ -154,7 +156,8 @@ class Wizard(pygame.sprite.Sprite):
         elif self.health >= 0:
             color = HEALTH_10
         # Creates a rectangle to display the wizard health.
-        self.health_bar = pygame.Rect(0, 0, 75, 4)
+        width = int(self.rect.width * self.health / WIZARD_HEALTH)
+        self.health_bar = pygame.Rect(0, 0, width, 4)
         if self.health < WIZARD_HEALTH:
             pygame.draw.rect(self.image, color, self.health_bar)
 
@@ -173,7 +176,7 @@ class Stone(pygame.sprite.Sprite):
         self.spawn_time = pygame.time.get_ticks()
 
     def update(self):
-        self.pos += self.vel * self.game.dt
+        self.pos += self.vel * self.game.time
         self.rect.center = self.pos
         # Deletes stones if the stone hits a wall.
         if pygame.sprite.spritecollideany(self, self.game.walls):

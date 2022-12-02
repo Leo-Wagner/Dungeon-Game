@@ -13,6 +13,7 @@ HEALTH_40 = (255, 255, 102)
 HEALTH_30 = (255, 153, 153)
 HEALTH_20 = (255, 102, 102)
 HEALTH_10 = (255, 0, 0)
+BLACK = (0, 0, 0)
 
 # Screen settings
 WIDTH = 960
