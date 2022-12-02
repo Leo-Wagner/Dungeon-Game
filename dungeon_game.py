@@ -40,7 +40,9 @@ class DungeonGame:
     '''A class to manage the game.'''
     def __init__(self):
         pygame.init()
+        # Set screen dimensions.
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        # Sets caption at top of screen.
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
         # When a key is held down, there is a .5 s delay before a KEYDOWN event is sent.
@@ -48,21 +50,51 @@ class DungeonGame:
         pygame.key.set_repeat(500, 100)
         self.load_data()
 
-    # Load all the maps and images needed for the game.
+    # A function which displays text onto the screen when the game is paused.
+    def draw_text(self, text, font_name, size, color, x, y, align):
+        font = pygame.font.Font(font_name, size)
+        text_surface = font.render(text, True, color)
+        text_rect = text_surface.get_rect()
+        if align == 'top':
+            text_rect.midbottom = (x, y)
+        self.screen.blit(text_surface, text_rect)
+
+    # Load all the maps, images, and sounds needed for the game.
     def load_data(self):
         game_folder = path.dirname(__file__)
         image_folder = path.join(game_folder, 'image')
         map_folder = path.join(game_folder, 'maps')
+        music_folder = path.join(game_folder, 'music')
+        sound_folder = path.join(game_folder, 'sounds')
+        self.font = path.join(image_folder, 'DUNGEON.TTF')
+        self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
+        self.dim_screen.fill((0, 0, 0, 120))
         self.map = TiledMap(path.join(map_folder, 'Dungeon_Map.tmx'))
         self.map_image = self.map.make_map()
         self.map_rect = self.map_image.get_rect()
         self.knight_image = pygame.image.load(path.join(image_folder, KNIGHT_IMAGE)).convert_alpha()
+        self.knight_image = pygame.transform.scale(self.knight_image, (24, 24))
         self.stone_image = pygame.image.load(path.join(image_folder, STONE_IMAGE)).convert_alpha()
         self.wizard_image = pygame.image.load(path.join(image_folder, WIZARD_IMAGE)).convert_alpha()
+        self.wizard_image = pygame.transform.scale(self.wizard_image, (24, 24))
         self.wall_image = pygame.image.load(path.join(image_folder, WALL_IMAGE)).convert_alpha()
-        self.collectible_images = {}
-        for collectible in COLLECTIBLE_IMAGES:
-            self.collectible_images[collectible] = pygame.image.load(path.join(image_folder, COLLECTIBLE_IMAGES[collectible])).convert_alpha()
+        self.cross = pygame.image.load(path.join(image_folder, CROSS)).convert_alpha()
+        self.cross = pygame.transform.scale(self.cross, (24, 24))
+        self.health = pygame.image.load(path.join(image_folder, HEALTH)).convert_alpha()
+        self.health = pygame.transform.scale(self.health, (24, 24))
+        pygame.mixer.music.load(path.join(music_folder, MUSIC))
+        self.health_sound = {}
+        for type in HEALTH_SOUND:
+            self.health_sound[type] = pygame.mixer.Sound(path.join(sound_folder, HEALTH_SOUND[type]))
+        self.stone_sound = {}
+        for type in STONE_SOUND:
+            self.stone_sound[type] = pygame.mixer.Sound(path.join(sound_folder, STONE_SOUND[type]))
+        self.wizard_hit_sound = {}
+        for type in WIZARD_HIT_SOUND:
+            self.wizard_hit_sound[type] = pygame.mixer.Sound(path.join(sound_folder, WIZARD_HIT_SOUND[type]))
+        self.knight_hit_sound = {}
+        for type in KNIGHT_HIT_SOUND:
+            self.knight_hit_sound[type] = pygame.mixer.Sound(path.join(sound_folder, KNIGHT_HIT_SOUND[type]))
 
     def new(self):
         self.all_sprites = pygame.sprite.LayeredUpdates()
@@ -87,13 +119,17 @@ class DungeonGame:
                 Collectible(self, tile_object.x, tile_object.y, tile_object.name)
         self.camera = Camera(self.map.width, self.map.height)
         self.draw_debug = False
+        self.paused = False
+
 
     def run(self):
         self.playing = True
+        pygame.mixer.music.play(loops=-1)
         while self.playing:
             self.dt = self.clock.tick(FPS) / 1000
             self.events()
-            self.update()
+            if not self.paused:
+                self.update()
             self.draw()
 
     # Exits the game window if the player hits the 'X' in the top right of the screen.
@@ -105,14 +141,23 @@ class DungeonGame:
         # Update the game loop.
         self.all_sprites.update()
         self.camera.update(self.knight)
+
         # Finds collisions between the knight and collectibles.
         hits = pygame.sprite.spritecollide(self.knight, self.collectibles, False)
         for hit in hits:
             if hit.type == 'health' and self.knight.health < KNIGHT_HEALTH:
+                # Deletes the health pack from the screen.
+                hit.kill()
+                # Plays a sound for the knight collecting a health pack.
+                self.health_sound['health'].play()
+                # Adds a set amount of health to the knight's health.
                 self.knight.add_health(HEALTH_PACK)
+
         # Finds collisions between the knight and wizards.
         hits = pygame.sprite.spritecollide(self.knight, self.wizards, False, collide_hit_rect)
         for hit in hits:
+            # Plays a sound for a wizard hitting the knight.
+            self.knight_hit_sound['knight'].play()
             # Subtracts 10 health points from the knight's total health each time it is hit by a wizard.
             self.knight.health -= WIZARD_DAMAGE
             # Pauses the movement of a wizard if it hits the knight.
@@ -128,23 +173,15 @@ class DungeonGame:
         # Finds collisions between the wizards and the stones.
         hits = pygame.sprite.groupcollide(self.wizards, self.stones, False, True)
         for hit in hits:
+            # Plays a sound for a stone hitting a wizard.
+            self.wizard_hit_sound['wizard'].play()
             # Subtracts 10 health points from a wizard's total health each time it is hit by a stone.
             hit.health -= STONE_DAMAGE
             # Pauses the movement of a wizard if it is hit by a stone.
             hit.vel = vec(0, 0)
 
-
-# Not called in this version of game, was for earlier when I wanted to see the grid.
-    def draw_grid(self):
-        for x in range(0, WIDTH, TILESIZE):
-            pygame.draw.line(self.screen, LIGHTGREY, (x, 0), (x, HEIGHT))
-        for y in range(0, HEIGHT, TILESIZE):
-            pygame.draw.line(self.screen, LIGHTGREY, (0, y), (WIDTH, y))
-
     def draw(self):
-        #self.screen.fill(BGCOLOR)
         self.screen.blit(self.map_image, self.camera.apply_rect(self.map_rect))
-        #self.draw_grid()
         for sprite in self.all_sprites:
             if isinstance(sprite, Wizard):
                 sprite.draw_health()
@@ -155,6 +192,9 @@ class DungeonGame:
                 for wall in self.walls:
                     pygame.draw.rect(self.screen, WHITE, self.camera.apply_rect(wall.rect), 1)
         draw_knight_health(self.screen, 10, 10, self.knight.health / KNIGHT_HEALTH)
+        if self.paused:
+            self.screen.blit(self.dim_screen, (0, 0))
+            self.draw_text('PAUSED', self.font, 105, WHITE, WIDTH / 2, HEIGHT /2, align = 'top')
         pygame.display.flip()
 
     def events(self):
@@ -166,6 +206,8 @@ class DungeonGame:
                     self.quit()
                 if event.key == pygame.K_z:
                     self.draw_debug = not self.draw_debug
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.paused = not self.paused
 
     #def show_start_screen(self):
         #pass

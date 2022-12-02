@@ -34,7 +34,7 @@ KNIGHT_HEALTH = 100
 KNIGHT_SPEED = 250
 KNIGHT_ROT_SPEED = 200
 KNIGHT_IMAGE = 'tile_0096.png'
-KNIGHT_HIT_RECT = pygame.Rect(0, 0, 16, 16)
+KNIGHT_HIT_RECT = pygame.Rect(0, 0, 24, 24)
 
 # Stone Settings
 STONE_IMAGE = 'tile_0101.png'
@@ -46,16 +46,24 @@ STONE_DAMAGE = 10
 # Wizard settings
 WIZARD_IMAGE = 'tile_0111.png'
 WIZARD_SPEED = [80, 90, 100, 110, 120]
-WIZARD_HIT_RECT = pygame.Rect(0, 0, 16, 16)
+WIZARD_HIT_RECT = pygame.Rect(0, 0, 24, 24)
 WIZARD_HEALTH = 100
 WIZARD_DAMAGE = 10
 WIZARD_MOVEBACK = 20
 AVOID_RADIUS = 50
+CROSS = 'tile_0064.png'
 
 # Collectibles settings
-COLLECTIBLE_IMAGES = {'health': 'tile_0114.png'}
+HEALTH = 'tile_0114.png'
 HEALTH_PACK = 20
 
 # Layer settings
 KNIGHT_LAYER = 2
 COLLECTIBLES_LAYER = 1
+
+# Sounds settings
+MUSIC = 'music.mp3'
+KNIGHT_HIT_SOUND = {'knight': 'knight.mp3'}
+WIZARD_HIT_SOUND = {'wizard': 'wizard.mp3'}
+STONE_SOUND = {'stone': 'stone.mp3'}
+HEALTH_SOUND = {'health': 'health.mp3'}

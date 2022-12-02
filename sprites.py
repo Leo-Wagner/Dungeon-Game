@@ -62,6 +62,7 @@ class Knight(pygame.sprite.Sprite):
                 self.last_shot = now
                 dir = vec(1, 0).rotate(-self.rot)
                 Stone(self.game, self.pos, dir)
+                self.game.stone_sound['stone'].play()
 
     def update(self):
         self.get_keys()
@@ -100,6 +101,8 @@ class Wizard(pygame.sprite.Sprite):
         self.health = WIZARD_HEALTH
         self.speed = choice(WIZARD_SPEED)
 
+    # A function that stops the wizards from clumping together into one image.
+    # They always began to overlap with each other once they had been chasing the knight for 15 or 20 seconds.
     def avoid_wizards(self):
         for wizard in self.game.wizards:
             if wizard != self:
@@ -125,6 +128,7 @@ class Wizard(pygame.sprite.Sprite):
         self.rect.center = self.hit_rect.center
         if self.health <= 0:
             self.kill()
+            self.game.map_image.blit(self.game.cross, self.pos - vec(12, 12))
 
     def draw_health(self):
     # Checks to see the amount of health the wizard has remaining,
@@ -150,7 +154,7 @@ class Wizard(pygame.sprite.Sprite):
         elif self.health >= 0:
             color = HEALTH_10
         # Creates a rectangle to display the wizard health.
-        self.health_bar = pygame.Rect(0, 0, 50, 10)
+        self.health_bar = pygame.Rect(0, 0, 75, 4)
         if self.health < WIZARD_HEALTH:
             pygame.draw.rect(self.image, color, self.health_bar)
 
@@ -195,7 +199,7 @@ class Collectible(pygame.sprite.Sprite):
         self._collectible = COLLECTIBLES_LAYER
         self.groups = game.all_sprites, game.collectibles
         pygame.sprite.Sprite.__init__(self, self.groups)
-        self.image = game.collectible_images[type]
+        self.image = game.health
         self.rect = self.image.get_rect()
         self.type = type
         self.rect.center = (x, y)
