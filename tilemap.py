@@ -2,7 +2,7 @@ import pygame
 import pytmx
 from settings import *
 
-# Check for
+# A function which will check for collisions between the edge of the Tiled map and the viewing screen.
 def collide_hit_rect(one, two):
     return one.hit_rect.colliderect(two.rect)
 
@@ -31,6 +31,7 @@ class TiledMap:
 
 class Camera:
     '''A class to shift the screen of view as the knight moves.'''
+    # Passes in the width and height of the camera (or viewing screen e.g. the visible part of the map).
     def __init__(self, width, height):
         self.camera = pygame.Rect(0, 0, width, height)
         self.width = width
@@ -45,6 +46,8 @@ class Camera:
         return rect.move(self.camera.topleft)
 
     def update(self, target):
+        # Needs to be negative, because if the knight moves right, the camera offset needs to shift left.
+        # Adding half of the screen size (int(WIDTH or HEIGHT / 2)) will keep the knight centered in the screen.
         x = -target.rect.centerx + int(WIDTH / 2)
         y = -target.rect.centery + int(HEIGHT/ 2)
 

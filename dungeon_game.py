@@ -129,6 +129,7 @@ class DungeonGame:
             # If so, a health potion spawns at the location of the tile object.
             if tile_object.name in ['health']:
                 Collectible(self, tile_object.x, tile_object.y, tile_object.name)
+        # Total area that the camera can occupy.
         self.camera = Camera(self.map.width, self.map.height)
         self.paused = False
 
@@ -151,6 +152,7 @@ class DungeonGame:
     def update(self):
         # Update the game loop.
         self.all_sprites.update()
+        # Updates the camera while tracking the knight.
         self.camera.update(self.knight)
 
         # Finds collisions between the knight and collectibles.
@@ -172,14 +174,14 @@ class DungeonGame:
             # Subtracts 10 health points from the knight's total health each time it is hit by a wizard.
             self.knight.health -= WIZARD_DAMAGE
             # Pauses the movement of a wizard if it hits the knight.
-            hit.vel = vec(0, 0)
+            hit.velocity = vec(0, 0)
             # Checks to see if the knight's health is equal to zero.
             if self.knight.health <= 0:
                 # Ends the game if the knight's health is equal to zero.
                 self.playing = False
         if hits:
             # Pushes the knight back if it is hit by a wizard.
-            self.knight.pos += vec(WIZARD_MOVEBACK, 0).rotate(-hits[0].rot)
+            self.knight.position += vec(WIZARD_MOVEBACK, 0).rotate(-hits[0].rotation)
 
         # Finds collisions between the wizards and the stones.
         hits = pygame.sprite.groupcollide(self.wizards, self.stones, False, True)
@@ -189,7 +191,7 @@ class DungeonGame:
             # Subtracts 10 health points from a wizard's total health each time it is hit by a stone.
             hit.health -= STONE_DAMAGE
             # Pauses the movement of a wizard if it is hit by a stone.
-            hit.vel = vec(0, 0)
+            hit.velocity = vec(0, 0)
 
 
     def draw(self):

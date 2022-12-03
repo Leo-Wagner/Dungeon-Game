@@ -5,25 +5,31 @@ from tilemap import collide_hit_rect
 vec = pygame.math.Vector2
 
 # A function to determine if a knight or wizard hits a wall.
-def collide_with_walls(sprite, group, dir):
-    if dir == 'x':
+def collide_with_walls(sprite, group, direction):
+    if direction == 'x':
         hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect)
         if hits:
+            # Places the sprite at the left edge of whatever it hit.
             if hits[0].rect.centerx > sprite.hit_rect.centerx:
-                sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width / 2
+                sprite.position.x = hits[0].rect.left - sprite.hit_rect.width / 2
+            # Places the sprite at the right edge of whatever it hit.
             if hits[0].rect.centerx < sprite.hit_rect.centerx:
-                sprite.pos.x = hits[0].rect.right + sprite.hit_rect.width / 2
-            sprite.vel.x = 0
-            sprite.hit_rect.centerx = sprite.pos.x
-    if dir == 'y':
+                sprite.position.x = hits[0].rect.right + sprite.hit_rect.width / 2
+            # Stops the x-velocity from increasing while the sprite is hitting a wall.
+            sprite.velocity.x = 0
+            sprite.hit_rect.centerx = sprite.position.x
+    if direction == 'y':
         hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect)
         if hits:
+            # Places the sprite at the top edge of whatever it hit.
             if hits[0].rect.centery > sprite.hit_rect.centery:
-                sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height / 2
+                sprite.position.y = hits[0].rect.top - sprite.hit_rect.height / 2
+            # Places the sprite at the bottom edge of whatever it hit.
             if hits[0].rect.centery < sprite.hit_rect.centery:
-                sprite.pos.y = hits[0].rect.bottom + sprite.hit_rect.height / 2
-            sprite.vel.y = 0
-            sprite.hit_rect.centery = sprite.pos.y
+                sprite.position.y = hits[0].rect.bottom + sprite.hit_rect.height / 2
+            # Stops the y-velocity from increasing while the sprite is hitting a wall.
+            sprite.velocity.y = 0
+            sprite.hit_rect.centery = sprite.position.y
 
 class Knight(pygame.sprite.Sprite):
     '''A class to manage the knight'''
@@ -37,43 +43,53 @@ class Knight(pygame.sprite.Sprite):
         self.rect.center = (x, y)
         self.hit_rect = KNIGHT_HIT_RECT
         self.hit_rect.center = self.rect.center
-        self.vel = vec(0, 0)
-        self.pos = vec(x, y)
-        self.rot = 0
+        self.velocity = vec(0, 0)
+        self.position = vec(x, y)
+        self.rotation = 0
         self.last_shot = 0
         self.health = KNIGHT_HEALTH
 
 # A function to determine how the knight should respond if certain keys are pressed.
     def get_keys(self):
-        self.rot_speed = 0
-        self.vel = vec(0, 0)
+        # Knight is not rotating if keys are not pressed down.
+        self.rotation_speed = 0
+        # Knight is not moving if keys are not pressed down.
+        self.velocity = vec(0, 0)
         keys = pygame.key.get_pressed()
+        # Rotates the knight left at a set speed if left arrow key is pressed.
         if keys[pygame.K_LEFT]:
-            self.rot_speed = KNIGHT_ROT_SPEED
+            self.rotation_speed = KNIGHT_ROTATION_SPEED
+        # Rotates the knight right at a set speed if right arrow key is pressed.
         if keys[pygame.K_RIGHT]:
-            self.rot_speed = -KNIGHT_ROT_SPEED
+            self.rotation_speed = -KNIGHT_ROTATION_SPEED
+        # Knight moves forward at the knight speed in the direction it is facing.
         if keys[pygame.K_UP]:
-            self.vel = vec(KNIGHT_SPEED, 0).rotate(-self.rot)
+            self.velocity = vec(KNIGHT_SPEED, 0).rotate(-self.rotation)
+        # Knight moves backward at the knight speed in the direction it is facing.
         if keys[pygame.K_DOWN]:
-            self.vel = vec(-KNIGHT_SPEED / 2, 0).rotate(-self.rot)
+            self.velocity = vec(-KNIGHT_SPEED / 2, 0).rotate(-self.rotation)
+        # The knight throws a stone if the space bar is pressed.
         if keys[pygame.K_SPACE]:
             now = pygame.time.get_ticks()
+
             if now - self.last_shot > STONE_RATE:
                 self.last_shot = now
-                dir = vec(1, 0).rotate(-self.rot)
-                Stone(self.game, self.pos, dir)
+                direction = vec(1, 0).rotate(-self.rotation)
+                Stone(self.game, self.position, direction)
                 self.game.stone_sound['stone'].play()
 
     def update(self):
         self.get_keys()
-        self.rot = (self.rot + self.rot_speed * self.game.time % 360)
-        self.image = pygame.transform.rotate(self.game.knight_image, self.rot)
+        # Updates the rotation with the knight's current rotation (% 360 to keep the angle between 1 and 360).
+        self.rotation = (self.rotation + self.rotation_speed * self.game.time % 360)
+        # Rotates the knight image to match the rotation input by the arrow keys.
+        self.image = pygame.transform.rotate(self.game.knight_image, self.rotation)
         self.rect = self.image.get_rect()
-        self.rect.center = self.pos
-        self.pos += self.vel * self.game.time
-        self.hit_rect.centerx = self.pos.x
+        self.rect.center = self.position
+        self.position += self.velocity * self.game.time
+        self.hit_rect.centerx = self.position.x
         collide_with_walls(self, self.game.walls, 'x')
-        self.hit_rect.centery = self.pos.y
+        self.hit_rect.centery = self.position.y
         collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
 
@@ -93,11 +109,12 @@ class Wizard(pygame.sprite.Sprite):
         self.rect.center = (x, y)
         self.hit_rect = WIZARD_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
-        self.pos = vec(x, y)
-        self.vel = vec(0, 0)
-        self.acc = vec(0, 0)
-        self.rect.center = self.pos
-        self.rot = 0
+        self.position = vec(x, y)
+        self.velocity = vec(1, 1)
+        # Ensures that the wizard does not immediately change direction if the knight passes by it.
+        self.acceleration = vec(0, 0)
+        self.rect.center = self.position
+        self.rotation = 0
         # Sets the health of the wizard to 100
         self.health = WIZARD_HEALTH
         # Sets different speeds for different wizards.
@@ -108,29 +125,35 @@ class Wizard(pygame.sprite.Sprite):
     def avoid_wizards(self):
         for wizard in self.game.wizards:
             if wizard != self:
-                dist = self.pos - wizard.pos
+                dist = self.position - wizard.position
                 if 0 < dist.length() < AVOID_RADIUS:
-                    self.acc += dist.normalize()
+                    self.acceleration += dist.normalize()
 
     def update(self):
-        self.rot = (self.game.knight.pos - self.pos).angle_to(vec(1, 0))
-        self.image = pygame.transform.rotate(self.game.wizard_image, self.rot)
+        # Points the wizard in the direction of the knight.
+        self.rotation = (self.game.knight.position - self.position).angle_to(vec(1, 0))
+        # Rotates a wizard the image by rotation
+        self.image = pygame.transform.rotate(self.game.wizard_image, self.rotation)
         self.rect = self.image.get_rect()
-        self.rect.center = self.pos
-        self.acc = vec(1, 0).rotate(-self.rot)
+        self.rect.center = self.position
+        self.acceleration = vec(1, 0).rotate(-self.rotation)
         self.avoid_wizards()
-        self.acc.scale_to_length(self.speed)
-        self.acc += self.vel * -1
-        self.vel += self.acc * self.game.time
-        self.pos += self.vel * self.game.time + .5 * self.acc * self.game.time ** 2
-        self.hit_rect.centerx = self.pos.x
+        # Does not change direction of the vector, only alters magnitude.
+        self.acceleration.scale_to_length(self.speed)
+        self.acceleration += self.velocity * -1
+        self.velocity += self.acceleration * self.game.time
+        self.position += self.velocity * self.game.time + .5 * self.acceleration * self.game.time ** 2
+        self.hit_rect.centerx = self.position.x
         collide_with_walls(self, self.game.walls, 'x')
-        self.hit_rect.centery = self.pos.y
+        self.hit_rect.centery = self.position.y
         collide_with_walls(self, self.game.walls, 'y')
         self.rect.center = self.hit_rect.center
+        # Checks to see if a wizard's health is 0.
         if self.health <= 0:
+            # Deletes a wizard.
             self.kill()
-            self.game.map_image.blit(self.game.cross, self.pos - vec(12, 12))
+            # Draws a cross where the wizard died.
+            self.game.map_image.blit(self.game.cross, self.position - vec(12, 12))
 
     def draw_health(self):
     # Checks to see the amount of health the wizard has remaining,
@@ -162,22 +185,22 @@ class Wizard(pygame.sprite.Sprite):
             pygame.draw.rect(self.image, color, self.health_bar)
 
 class Stone(pygame.sprite.Sprite):
-    '''A class to manage stones'''
-    def __init__(self, game, pos, dir):
+    '''A class to manage stones which the knight throws.'''
+    def __init__(self, game, position, direction):
         self.groups = game.all_sprites, game.stones
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = game.stone_image
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
-        self.pos = vec(pos)
-        self.rect.center = pos
-        self.vel = dir * STONE_SPEED
+        self.position = vec(position)
+        self.rect.center = position
+        self.velocity = direction * STONE_SPEED
         self.spawn_time = pygame.time.get_ticks()
 
     def update(self):
-        self.pos += self.vel * self.game.time
-        self.rect.center = self.pos
+        self.position += self.velocity * self.game.time
+        self.rect.center = self.position
         # Deletes stones if the stone hits a wall.
         if pygame.sprite.spritecollideany(self, self.game.walls):
             self.kill()
@@ -199,6 +222,7 @@ class Obstacle(pygame.sprite.Sprite):
 
 class Collectible(pygame.sprite.Sprite):
     def __init__(self, game, x, y, type):
+        # Sets the layer of collectibles to under the layer of the knight.
         self._collectible = COLLECTIBLES_LAYER
         self.groups = game.all_sprites, game.collectibles
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -206,4 +230,4 @@ class Collectible(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.type = type
         self.rect.center = (x, y)
-        self.pos = vec(x,y)
+        self.position = vec(x,y)
