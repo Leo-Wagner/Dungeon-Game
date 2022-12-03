@@ -98,7 +98,7 @@ class Wizard(pygame.sprite.Sprite):
         self.acc = vec(0, 0)
         self.rect.center = self.pos
         self.rot = 0
-        # Sets the health of the wizard to 100.44
+        # Sets the health of the wizard to 100
         self.health = WIZARD_HEALTH
         # Sets different speeds for different wizards.
         self.speed = choice(WIZARD_SPEED)
