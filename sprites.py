@@ -34,6 +34,7 @@ def collide_with_walls(sprite, group, direction):
 class Knight(pygame.sprite.Sprite):
     '''A class to manage the knight'''
     def __init__(self, game, x, y):
+        # Sets the layer of the knight so that it goes above other layers (specifically for the health potion collectible).
         self._layer = KNIGHT_LAYER
         self.groups = game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -43,8 +44,11 @@ class Knight(pygame.sprite.Sprite):
         self.rect.center = (x, y)
         self.hit_rect = KNIGHT_HIT_RECT
         self.hit_rect.center = self.rect.center
+        # 2-dimensional velocity of the knight.
         self.velocity = vec(0, 0)
+        # 2-dimensional position of the knight.
         self.position = vec(x, y)
+        # Sets the knight's initial rotation at 0.
         self.rotation = 0
         self.last_shot = 0
         self.health = KNIGHT_HEALTH
@@ -71,11 +75,12 @@ class Knight(pygame.sprite.Sprite):
         # The knight throws a stone if the space bar is pressed.
         if keys[pygame.K_SPACE]:
             now = pygame.time.get_ticks()
-
+            # Allows for a stone to be thrown every .1 s (STONE_RATE)
             if now - self.last_shot > STONE_RATE:
                 self.last_shot = now
                 direction = vec(1, 0).rotate(-self.rotation)
                 Stone(self.game, self.position, direction)
+                # Plays a specific sound effect each time the space bar is pressed.
                 self.game.stone_sound['stone'].play()
 
     def update(self):
@@ -86,6 +91,7 @@ class Knight(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.game.knight_image, self.rotation)
         self.rect = self.image.get_rect()
         self.rect.center = self.position
+        # Determines the knight's position by measuring how long it has travelled in a distance at a set speed.
         self.position += self.velocity * self.game.time
         self.hit_rect.centerx = self.position.x
         collide_with_walls(self, self.game.walls, 'x')
@@ -95,6 +101,7 @@ class Knight(pygame.sprite.Sprite):
 
     def add_health(self, amount):
         self.health += amount
+        # Ensures that health cannot exceed a maximum amount specified in the Settings file.
         if self.health > KNIGHT_HEALTH:
             self.health = KNIGHT_HEALTH
 
@@ -109,8 +116,11 @@ class Wizard(pygame.sprite.Sprite):
         self.rect.center = (x, y)
         self.hit_rect = WIZARD_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
+        # 2-dimensional position of wizards.
         self.position = vec(x, y)
+        # 2-dimensional velocity of wizards.
         self.velocity = vec(1, 1)
+        # 2-dimensional acceleration of wizards.
         # Ensures that the wizard does not immediately change direction if the knight passes by it.
         self.acceleration = vec(0, 0)
         self.rect.center = self.position
@@ -193,12 +203,16 @@ class Stone(pygame.sprite.Sprite):
         self.image = game.stone_image
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
+        # Sets the position of the stone as the position of the knight.
         self.position = vec(position)
         self.rect.center = position
+        # Projects the stone in the direction which the knight is facing with a set speed.
         self.velocity = direction * STONE_SPEED
+        # Measures how long it has been since the stone has been thrown.
         self.spawn_time = pygame.time.get_ticks()
 
     def update(self):
+        # Sets the position of the stone by seeing how long it has travelled in a distance at a set speed.
         self.position += self.velocity * self.game.time
         self.rect.center = self.position
         # Deletes stones if the stone hits a wall.
@@ -220,6 +234,8 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+        # The obstacle class does not require an update function because none of the walls move or change appearance.
+
 class Collectible(pygame.sprite.Sprite):
     def __init__(self, game, x, y, type):
         # Sets the layer of collectibles to under the layer of the knight.
@@ -230,4 +246,5 @@ class Collectible(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.type = type
         self.rect.center = (x, y)
+        # Creates a 2-dimensional vector for any collectibles' position.
         self.position = vec(x,y)
